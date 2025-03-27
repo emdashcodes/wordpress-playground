@@ -1,0 +1,122 @@
+{
+	"name": "php-wasm-node-xdiff",
+	"$schema": "../../../node_modules/nx/schemas/project-schema.json",
+	"sourceRoot": "packages/php-wasm/node-xdiff/src",
+	"projectType": "library",
+	"implicitDependencies": ["php-wasm-compile"],
+	"targets": {
+		"build": {
+			"executor": "nx:noop",
+			"dependsOn": [
+				"build:bundle",
+				"build:README",
+				"build:dts",
+				"build:copy-wasms"
+			]
+		},
+		"build:README": {
+			"executor": "nx:run-commands",
+			"options": {
+				"commands": [
+					"cp packages/php-wasm/node-xdiff/README.md dist/packages/php-wasm/node-xdiff"
+				]
+			},
+			"dependsOn": ["build:mkdir"]
+		},
+		"build:copy-wasms": {
+			"executor": "nx:run-commands",
+			"options": {
+				"commands": [
+					"mkdir -p dist/packages/php-wasm/node-xdiff/jspi",
+					"cp -rf packages/php-wasm/node-xdiff/jspi/* dist/packages/php-wasm/node-xdiff/jspi/",
+					"cp -rf packages/php-wasm/node-xdiff/src dist/packages/php-wasm/node-xdiff/",
+					"cp -rf packages/php-wasm/node-xdiff/bin dist/packages/php-wasm/node-xdiff/",
+					"cp packages/php-wasm/node-xdiff/package.json dist/packages/php-wasm/node-xdiff/"
+				],
+				"parallel": false
+			},
+			"dependsOn": ["build:mkdir"]
+		},
+		"build:package-json": {
+			"executor": "nx:run-commands",
+			"options": {
+				"commands": [
+					"cp packages/php-wasm/node-xdiff/package.json dist/packages/php-wasm/node-xdiff/package.json"
+				],
+				"parallel": false
+			},
+			"dependsOn": ["build:mkdir"]
+		},
+		"build:dts": {
+			"executor": "nx:run-commands",
+			"options": {
+				"cwd": "packages/php-wasm/node-xdiff",
+				"commands": [
+					"npx -p typescript tsc --project tsconfig.lib.json --declaration --allowJs --emitDeclarationOnly --outDir ../../../dist/packages/php-wasm/node-xdiff",
+					"cp -r ../src/* ../../../dist/packages/php-wasm/node-xdiff/",
+					"cp ../index.d.ts ../../../dist/packages/php-wasm/node-xdiff/"
+				],
+				"parallel": false
+			},
+			"dependsOn": ["build:copy-wasms"]
+		},
+		"build:bundle": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "node packages/php-wasm/node-xdiff/build.js",
+				"parallel": false
+			},
+			"dependsOn": ["build:mkdir"]
+		},
+		"build:mkdir": {
+			"executor": "nx:run-commands",
+			"options": {
+				"commands": ["mkdir -p dist/packages/php-wasm/node-xdiff"],
+				"parallel": false
+			}
+		},
+		"package-json": {
+			"executor": "@wp-playground/nx-extensions:package-json",
+			"options": {
+				"tsConfig": "packages/php-wasm/node-xdiff/tsconfig.lib.json",
+				"outputPath": "dist/packages/php-wasm/node-xdiff",
+				"buildTarget": "php-wasm-node-xdiff:build:production"
+			}
+		},
+		"publish": {
+			"executor": "nx:run-commands",
+			"options": {
+				"command": "node tools/scripts/publish.mjs php-wasm-node-xdiff {args.ver} {args.tag}",
+				"parallel": false
+			},
+			"dependsOn": ["build"]
+		},
+		"test": {
+			"executor": "@nx/vite:test",
+			"outputs": [
+				"{workspaceRoot}/coverage/packages/php-wasm/node-xdiff"
+			],
+			"options": {
+				"passWithNoTests": true,
+				"reportsDirectory": "../../../coverage/packages/php-wasm/node-xdiff"
+			}
+		},
+		"lint": {
+			"executor": "@nx/linter:eslint",
+			"outputs": ["{options.outputFile}"],
+			"options": {
+				"lintFilePatterns": ["packages/php-wasm/node-xdiff/**/*.ts"]
+			}
+		},
+		"typecheck": {
+			"executor": "nx:run-commands",
+			"options": {
+				"commands": [
+					"tsc -p packages/php-wasm/node-xdiff/tsconfig.lib.json --noEmit",
+					"tsc -p packages/php-wasm/node-xdiff/tsconfig.spec.json --noEmit"
+				]
+			}
+		}
+	},
+	"tags": ["scope:php-binaries"]
+}
